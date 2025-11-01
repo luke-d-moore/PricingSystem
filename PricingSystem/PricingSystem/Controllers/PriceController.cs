@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Net;
 using Microsoft.AspNetCore.Mvc.Routing;
 
-namespace PricingSyetem.Controllers
+namespace PricingSystem.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
