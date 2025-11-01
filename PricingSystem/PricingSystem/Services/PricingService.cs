@@ -5,7 +5,7 @@ namespace PricingSystem.Services
 {
     public class PricingService : PricingServiceBase, IPricingService
     {
-        private const int CheckRateMilliseconds = 60000;
+        private const int CheckRateMilliseconds = 30000;
         private readonly ILogger<PricingService> _logger;
         private readonly IConfiguration _configuration;
         //These would be accessed from the database, but here I have hardcoded for testing
