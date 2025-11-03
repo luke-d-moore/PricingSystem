@@ -3,20 +3,21 @@ using PricingSystem.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Moq;
+using PricingSystem.Interfaces;
 
 namespace PricingSystemTests
 {
     public class PricingServiceTests
     {
         private readonly IPricingService _pricingService;
+        private readonly Mock<IPriceChecker> _priceChecker;
         private readonly ILogger<PricingService> _priceLogger;
-        private readonly IConfiguration _configuration;
 
         public PricingServiceTests()
         {
             _priceLogger = new Mock<ILogger<PricingService>>().Object;
-            _configuration = new Mock<IConfiguration>().Object;
-            _pricingService = new PricingService(_priceLogger, _configuration);
+            _priceChecker = new Mock<IPriceChecker>();
+            _pricingService = new PricingService(_priceLogger, _priceChecker.Object);
         }
         public static IEnumerable<object[]> TickerData =>
     new List<object[]>

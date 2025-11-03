@@ -1,4 +1,4 @@
-﻿namespace PricingSystem.Services
+﻿namespace PricingSystem.Interfaces
 {
     public interface IPricingService : IHostedService
     {

@@ -1,6 +1,7 @@
 using PricingSystem.Services;
 using Serilog;
 using PricingSystem.Logging;
+using PricingSystem.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,7 @@ LogConfiguration.ConfigureSerilog(configuration);
 builder.Services.AddLogging(configure => { configure.AddSerilog(); });
 
 builder.Services.AddSingleton<IPricingService, PricingService>();
+builder.Services.AddSingleton<IPriceChecker, PriceChecker>();
 builder.Services.AddHostedService(p => p.GetRequiredService<IPricingService>());
 
 var app = builder.Build();

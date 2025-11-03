@@ -1,0 +1,44 @@
+﻿using PricingSystem.Response;
+using Serilog;
+using System.Text.Json;
+using Microsoft.Extensions.Configuration;
+using PricingSystem.Interfaces;
+
+namespace PricingSystem.Services
+{
+    public class PriceChecker : IPriceChecker
+    {
+        private readonly IConfiguration _configuration;
+        private readonly string _baseURL;
+        private readonly ILogger<PriceChecker> _logger;
+        public PriceChecker(IConfiguration configuration, ILogger<PriceChecker> logger)
+        {
+            _configuration = configuration;
+            _baseURL = _configuration["ThirdPartyPriceCheckURL"];
+            _logger = logger;
+        }
+        public async Task<decimal> GetPriceFromTicker(string ticker)
+        {
+            try
+            {
+                HttpClient client = new HttpClient();
+
+                using (HttpResponseMessage response = await client.GetAsync(_baseURL.Replace("[Ticker]", ticker)))
+                {
+                    using (HttpContent content = response.Content)
+                    {
+                        var json = await content.ReadAsStringAsync();
+                        var responseObject = JsonSerializer.Deserialize<PriceCheckResponse>(json);
+                        decimal? currentPrice = responseObject?.currentPrice;
+                        return currentPrice.HasValue ? currentPrice.Value : 0m;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Logger.Error(ex, "GetPriceFromTicker Failed with the following exception message" + ex.Message);
+            }
+            return 0m;
+        }
+    }
+}
