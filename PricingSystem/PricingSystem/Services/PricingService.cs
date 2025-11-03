@@ -6,7 +6,7 @@ namespace PricingSystem.Services
 {
     public class PricingService : PricingServiceBase, IPricingService
     {
-        private const int CheckRateMilliseconds = 30000;
+        private const int _checkRate = 30000;
         private readonly ILogger<PricingService> _logger;
         private readonly IConfiguration _configuration;
         //These would be accessed from the database, but here I have hardcoded for testing
@@ -14,7 +14,7 @@ namespace PricingSystem.Services
         private readonly IDictionary<string, decimal> _prices = new ConcurrentDictionary<string, decimal>();
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(10,20);
         public PricingService(ILogger<PricingService> logger, IConfiguration configuration) 
-            : base(CheckRateMilliseconds, logger)
+            : base(_checkRate, logger)
         {
             _logger = logger;
             _configuration = configuration;
