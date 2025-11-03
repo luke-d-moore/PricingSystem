@@ -1,5 +1,6 @@
 ﻿using PricingSystem.Classes;
 using System.Collections.Concurrent;
+using System.Threading;
 
 namespace PricingSystem.Services
 {
@@ -10,7 +11,8 @@ namespace PricingSystem.Services
         private readonly IConfiguration _configuration;
         //These would be accessed from the database, but here I have hardcoded for testing
         private readonly HashSet<string> _tickers = new HashSet<string>() { "IBM", "AMZN", "AAPL" };
-        private readonly Dictionary<string, decimal> _prices = new Dictionary<string, decimal>();
+        private readonly IDictionary<string, decimal> _prices = new ConcurrentDictionary<string, decimal>();
+        private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(10,20);
         public PricingService(ILogger<PricingService> logger, IConfiguration configuration) 
             : base(CheckRateMilliseconds, logger)
         {
@@ -22,21 +24,12 @@ namespace PricingSystem.Services
                 _prices.TryAdd(ticker, 0m);
             }
         }
-        public async Task<bool> GetLatestPrices()
-        {
-            var tasks = _tickers.Select(ticker => Task.Run(async () => _prices[ticker] = await PriceChecker.GetPriceFromTicker(ticker, _configuration["ThirdPartyPriceCheckURL"])));
-
-            await Task.WhenAll(tasks);
-
-            return true;
-        }
         public async Task<decimal> GetCurrentPrice(string Ticker)
         {
-            await Task.Delay(1);
-            var ticker = Ticker.ToUpper();
-            if (_prices.Keys.Contains(ticker))
+            await Task.Delay(0);
+            if(_prices.TryGetValue(Ticker, out var price))
             {
-                return _prices[ticker];
+                return price;
             }
             else
             {
@@ -44,37 +37,6 @@ namespace PricingSystem.Services
             }
 
         }
-        public decimal Buy(string Ticker, int Quantity, decimal OriginalPrice, decimal CurrentPrice)
-        {
-            if (!_tickers.Contains(Ticker, StringComparer.OrdinalIgnoreCase))
-            {
-                throw new ArgumentException("Invalid Ticker", "ticker");
-            }
-            if (Quantity <= 0)
-            {
-                throw new ArgumentOutOfRangeException("quantity", Quantity, "Quantity must be greater than 0.");
-            }
-
-            var Difference = OriginalPrice - CurrentPrice; // for buy this is positive as original > current
-
-            return Difference * Quantity;
-        }
-        public decimal Sell(string Ticker, int Quantity, decimal OriginalPrice, decimal CurrentPrice)
-        {
-            if (!_tickers.Contains(Ticker, StringComparer.OrdinalIgnoreCase))
-            {
-                throw new ArgumentException("Invalid Ticker", "ticker");
-            }
-            if (Quantity <= 0)
-            {
-                throw new ArgumentOutOfRangeException("quantity", Quantity, "Quantity must be greater than 0.");
-            }
-
-            var Difference = CurrentPrice - OriginalPrice; // for sell this is negative as original < current
-
-            return Difference * Quantity;
-        }
-
         public IList<string> GetTickers()
         {
             return _tickers.ToList();
@@ -87,7 +49,31 @@ namespace PricingSystem.Services
 
         protected async override Task<bool> SetCurrentPrices()
         {
-            return await GetLatestPrices();
+            var tasks = _tickers.Select(async ticker =>
+                {
+                    await _semaphoreSlim.WaitAsync().ConfigureAwait(false);
+                    try
+                    {
+                        decimal price = await PriceChecker.GetPriceFromTicker(ticker, _configuration["ThirdPartyPriceCheckURL"]).ConfigureAwait(false);
+                        if (price > 0m)
+                        {
+                            _prices[ticker] = price;
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        _logger.LogError(ex.Message, $"The Ticker was {ticker}");
+                    }
+                    finally
+                    {
+                        _semaphoreSlim.Release();
+                    }
+                }
+            );
+
+            await Task.WhenAll(tasks);
+
+            return true;
         }
     }
 }
