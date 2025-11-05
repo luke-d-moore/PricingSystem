@@ -4,7 +4,7 @@
     {
         public IList<string> GetTickers();
         public IDictionary<string, decimal> GetPrices();
-        public Task<decimal> GetCurrentPrice(string Ticker);
+        public decimal GetCurrentPrice(string Ticker);
 
     }
 }

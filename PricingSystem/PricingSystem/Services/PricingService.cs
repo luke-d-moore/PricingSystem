@@ -24,10 +24,32 @@ namespace PricingSystem.Services
                 _prices.TryAdd(ticker, 0m);
             }
         }
-        public async Task<decimal> GetCurrentPrice(string Ticker)
+
+        private bool ValidateTicker(string Ticker)
         {
-            await Task.Delay(0);
-            if(_prices.TryGetValue(Ticker, out var price))
+            if (Ticker == null || (Ticker.Length > 5 || Ticker.Length < 3))
+            {
+                _logger.LogError($"Ticker was invalid.");
+                return false;
+            }
+
+            return true;
+        }
+        public decimal GetCurrentPrice(string Ticker)
+        {
+            if(!ValidateTicker(Ticker)) throw new ArgumentException("Invalid Ticker", "ticker");
+            var allowedTickers = GetTickers().ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            if (allowedTickers.Contains(Ticker))
+            {
+                Ticker = allowedTickers.First(x => x.Equals(Ticker, StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                _logger.LogError($"Ticker was invalid. Ticker was : {Ticker}");
+                throw new ArgumentException("Invalid Ticker", "ticker");
+            }
+            if (_prices.TryGetValue(Ticker, out var price))
             {
                 return price;
             }

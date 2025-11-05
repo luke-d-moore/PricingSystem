@@ -24,11 +24,11 @@ namespace PricingSystem.Controllers
         [HttpGet(nameof(GetPrice) + "/{ticker}")]
         [SwaggerOperation(nameof(GetPrice))]
         [SwaggerResponse(StatusCodes.Status200OK, "OK")]
-        public async Task<IActionResult> GetPrice(string ticker)
+        public IActionResult GetPrice(string ticker)
         {
             try
             {
-                var price = await _pricingService.GetCurrentPrice(ticker);
+                var price = _pricingService.GetCurrentPrice(ticker);
                 var response = new GetPriceResponse(true, "Price Retrieved", new Dictionary<string, decimal>() { { ticker, price } });
                 return Ok(response);
             }

@@ -31,7 +31,7 @@ namespace PricingSystemTests
         public async Task GetCurrentPrice_ValidTicker_ReturnsDecimalAsync()
         {
             //Arrange
-            var result = await _pricingService.GetCurrentPrice("IBM");
+            var result = _pricingService.GetCurrentPrice("IBM");
             //Act and Assert
             Assert.IsType<decimal>(result);
         }
@@ -41,7 +41,7 @@ namespace PricingSystemTests
             // Arrange
             var exceptionType = typeof(ArgumentException);
             // Act and Assert
-            Assert.ThrowsAsync(exceptionType, async () => await _pricingService.GetCurrentPrice(ticker));
+            Assert.Throws(exceptionType, () => _pricingService.GetCurrentPrice(ticker));
         }
     }
 }
