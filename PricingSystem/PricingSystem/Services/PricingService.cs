@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Threading;
+using System.Timers;
 using PricingSystem.Interfaces;
 
 namespace PricingSystem.Services
@@ -12,7 +13,7 @@ namespace PricingSystem.Services
         //These would be accessed from the database, but here I have hardcoded for testing
         private readonly HashSet<string> _tickers = new HashSet<string>() { "IBM", "AMZN", "AAPL" };
         private readonly IDictionary<string, decimal> _prices = new ConcurrentDictionary<string, decimal>();
-        private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(10,20);
+        private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(10);
         public PricingService(ILogger<PricingService> logger, IPriceChecker priceChecker) 
             : base(_checkRate, logger)
         {
@@ -69,29 +70,30 @@ namespace PricingSystem.Services
             return _prices;
         }
 
+        private async Task SetPrice(string Ticker)
+        {
+            await _semaphoreSlim.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var price = await _priceChecker.GetPriceFromTicker(Ticker).ConfigureAwait(false);
+                if (price > 0m)
+                {
+                    _prices[Ticker] = price;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, $"The Ticker was {Ticker}");
+            }
+            finally
+            {
+                _semaphoreSlim.Release();
+            }
+        }
+
         protected async override Task<bool> SetCurrentPrices()
         {
-            var tasks = _tickers.Select(async ticker =>
-                {
-                    await _semaphoreSlim.WaitAsync().ConfigureAwait(false);
-                    try
-                    {
-                        var price = await _priceChecker.GetPriceFromTicker(ticker).ConfigureAwait(false);
-                        if (price > 0m)
-                        {
-                            _prices[ticker] = price;
-                        }
-                    }
-                    catch(Exception ex)
-                    {
-                        _logger.LogError(ex.Message, $"The Ticker was {ticker}");
-                    }
-                    finally
-                    {
-                        _semaphoreSlim.Release();
-                    }
-                }
-            );
+            var tasks = _tickers.Select(async ticker => await SetPrice(ticker));
 
             await Task.WhenAll(tasks);
 
