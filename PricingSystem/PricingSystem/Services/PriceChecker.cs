@@ -25,7 +25,7 @@ namespace PricingSystem.Services
                 HttpClient client = new HttpClient();
 
                 _logger.LogInformation($"GetPriceFromTicker Request sent for Ticker {ticker} at Time :{DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)}");
-                using (HttpResponseMessage response = await client.GetAsync(_baseURL.Replace("[Ticker]", ticker)))
+                using (HttpResponseMessage response = await client.GetAsync(_baseURL.Replace("[Ticker]", ticker)).ConfigureAwait(false))
                 {
                     using (HttpContent content = response.Content)
                     {

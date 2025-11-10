@@ -93,7 +93,7 @@ namespace PricingSystem.Services
 
         protected async override Task<bool> SetCurrentPrices()
         {
-            var tasks = _tickers.Select(async ticker => await SetPrice(ticker));
+            var tasks = _tickers.Select(async ticker => await SetPrice(ticker).ConfigureAwait(false));
 
             await Task.WhenAll(tasks);
 
