@@ -24,13 +24,13 @@ namespace PricingSystem.Services
             {
                 HttpClient client = new HttpClient();
 
-                _logger.LogInformation($"GetPriceFromTicker Request sent for Ticker {ticker} at Time :{DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)}");
+                _logger.LogInformation($"GetPriceFromTicker Request sent for Ticker {ticker}");
                 using (HttpResponseMessage response = await client.GetAsync(_baseURL.Replace("[Ticker]", ticker)).ConfigureAwait(false))
                 {
                     using (HttpContent content = response.Content)
                     {
                         var json = await content.ReadAsStringAsync().ConfigureAwait(false);
-                        _logger.LogInformation($"GetPriceFromTicker Response received for Ticker {ticker} at Time :{DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)}, response was : {json}");
+                        _logger.LogInformation($"GetPriceFromTicker Response received for Ticker {ticker}, response was : {json}");
                         var responseObject = JsonSerializer.Deserialize<PriceCheckResponse>(json);
                         decimal? currentPrice = responseObject?.currentPrice;
                         return currentPrice.HasValue ? currentPrice.Value : 0m;
