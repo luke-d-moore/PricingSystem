@@ -30,7 +30,7 @@ namespace PricingSystem.Services
             {
                 _logger.LogInformation($"GetPriceFromTicker Request sent for Ticker {ticker}");
 
-                string requestUrl = _baseURL.Replace("[Ticker]", ticker);
+                var requestUrl = _baseURL.Replace("[Ticker]", ticker);
 
                 using (HttpResponseMessage response = await _client.GetAsync(requestUrl).ConfigureAwait(false))
                 {
@@ -42,7 +42,7 @@ namespace PricingSystem.Services
 
                     var responseObject = JsonSerializer.Deserialize<PriceCheckResponse>(json);
 
-                    decimal? currentPrice = responseObject?.currentPrice;
+                    var currentPrice = responseObject?.currentPrice;
 
                     if (!currentPrice.HasValue)
                     {
