@@ -16,11 +16,11 @@ namespace PricingSystem.Services
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(10);
         private const decimal InvalidPrice = 0m;
 
-        private HashSet<string> Tickers
+        public HashSet<string> Tickers
         {
             get { return _tickers; }
         }
-        private ConcurrentDictionary<string, decimal> Prices
+        public ConcurrentDictionary<string, decimal> Prices
         {
             get { return _prices; }
         }
