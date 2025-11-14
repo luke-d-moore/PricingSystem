@@ -13,6 +13,10 @@ namespace PricingSystem.Services
         private readonly string _baseURL;
         private readonly ILogger<PriceChecker> _logger;
         private HttpClient _client = new HttpClient();
+        public string BaseURL
+        {
+            get { return _baseURL; }
+        }
         public PriceChecker(IConfiguration configuration, ILogger<PriceChecker> logger)
         {
             _configuration = configuration;
@@ -30,7 +34,7 @@ namespace PricingSystem.Services
             {
                 _logger.LogInformation($"GetPriceFromTicker Request sent for Ticker {ticker}");
 
-                var requestUrl = _baseURL.Replace("[Ticker]", ticker);
+                var requestUrl = BaseURL.Replace("[Ticker]", ticker);
 
                 using (HttpResponseMessage response = await _client.GetAsync(requestUrl).ConfigureAwait(false))
                 {

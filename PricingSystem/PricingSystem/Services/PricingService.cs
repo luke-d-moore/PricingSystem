@@ -12,14 +12,18 @@ namespace PricingSystem.Services
         private readonly IPriceChecker _priceChecker;
         //These would be accessed from the database, but here I have hardcoded for testing
         private readonly HashSet<string> _tickers = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "IBM", "AMZN", "AAPL" };
-        private readonly IDictionary<string, decimal> _prices = new ConcurrentDictionary<string, decimal>();
+        private readonly ConcurrentDictionary<string, decimal> _prices = new ConcurrentDictionary<string, decimal>();
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(10);
         private const decimal InvalidPrice = 0m;
 
         private HashSet<string> Tickers
-            {
+        {
             get { return _tickers; }
-            }
+        }
+        private ConcurrentDictionary<string, decimal> Prices
+        {
+            get { return _prices; }
+        }
         public PricingService(ILogger<PricingService> logger, IPriceChecker priceChecker) 
             : base(_checkRate, logger)
         {
@@ -28,13 +32,17 @@ namespace PricingSystem.Services
 
             foreach(var ticker in Tickers)
             {
-                _prices.TryAdd(ticker, InvalidPrice);
+                Prices.TryAdd(ticker, InvalidPrice);
             }
         }
 
         private bool ValidateTicker(string Ticker)
         {
-            if (Ticker == null || (Ticker.Length > 5 || Ticker.Length < 3))
+            if (
+                Ticker == null || 
+                (Ticker.Length > 5 || 
+                Ticker.Length < 3)
+               )
             {
                 _logger.LogError($"Ticker was invalid.");
                 return false;
@@ -51,9 +59,10 @@ namespace PricingSystem.Services
             }
             else
             {
-                var normalisedTicker = Tickers.First(x => x.Equals(Ticker, StringComparison.OrdinalIgnoreCase));
+                var normalisedTicker = Tickers
+                    .First(x => x.Equals(Ticker, StringComparison.OrdinalIgnoreCase));
 
-                if (_prices.TryGetValue(normalisedTicker, out var price))
+                if (Prices.TryGetValue(normalisedTicker, out var price))
                 {
                     return price;
                 }
@@ -71,7 +80,7 @@ namespace PricingSystem.Services
 
         public IDictionary<string, decimal> GetPrices()
         {
-            return _prices;
+            return Prices;
         }
 
         private async Task SetPrice(string Ticker)
@@ -81,13 +90,17 @@ namespace PricingSystem.Services
                 _logger.LogError("SetPrice called with null or empty Ticker.");
                 return;
             }
-            await _semaphoreSlim.WaitAsync().ConfigureAwait(false);
+            await _semaphoreSlim
+                .WaitAsync()
+                .ConfigureAwait(false);
             try
             {
-                var price = await _priceChecker.GetPriceFromTicker(Ticker).ConfigureAwait(false);
+                var price = await _priceChecker
+                    .GetPriceFromTicker(Ticker)
+                    .ConfigureAwait(false);
                 if (price > InvalidPrice)
                 {
-                    _prices[Ticker] = price;
+                    Prices[Ticker] = price;
                 }
             }
             catch (Exception ex)
@@ -102,7 +115,9 @@ namespace PricingSystem.Services
 
         protected async override Task<bool> SetCurrentPrices()
         {
-            var tasks = Tickers.Select(async ticker => await SetPrice(ticker).ConfigureAwait(false));
+            var tasks = Tickers
+                .Select(async ticker => await SetPrice(ticker)
+                .ConfigureAwait(false));
 
             await Task.WhenAll(tasks);
 
