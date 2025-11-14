@@ -12,6 +12,7 @@ namespace PricingSystem.Services
         private readonly IConfiguration _configuration;
         private readonly string _baseURL;
         private readonly ILogger<PriceChecker> _logger;
+        private HttpClient _client = new HttpClient();
         public PriceChecker(IConfiguration configuration, ILogger<PriceChecker> logger)
         {
             _configuration = configuration;
@@ -20,28 +21,47 @@ namespace PricingSystem.Services
         }
         public async Task<decimal> GetPriceFromTicker(string ticker)
         {
+            if (string.IsNullOrEmpty(ticker))
+            {
+                _logger.LogWarning("GetPriceFromTicker called with null or empty ticker.");
+                throw new ArgumentException("Ticker cannot be null or empty.", nameof(ticker));
+            }
             try
             {
-                HttpClient client = new HttpClient();
-
                 _logger.LogInformation($"GetPriceFromTicker Request sent for Ticker {ticker}");
-                using (HttpResponseMessage response = await client.GetAsync(_baseURL.Replace("[Ticker]", ticker)).ConfigureAwait(false))
+
+                string requestUrl = _baseURL.Replace("[Ticker]", ticker);
+
+                using (HttpResponseMessage response = await _client.GetAsync(requestUrl).ConfigureAwait(false))
                 {
-                    using (HttpContent content = response.Content)
+                    response.EnsureSuccessStatusCode();
+
+                    var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    _logger.LogInformation($"GetPriceFromTicker Response received for Ticker {ticker}, response was: {json}");
+
+                    var responseObject = JsonSerializer.Deserialize<PriceCheckResponse>(json);
+
+                    decimal? currentPrice = responseObject?.currentPrice;
+
+                    if (!currentPrice.HasValue)
                     {
-                        var json = await content.ReadAsStringAsync().ConfigureAwait(false);
-                        _logger.LogInformation($"GetPriceFromTicker Response received for Ticker {ticker}, response was : {json}");
-                        var responseObject = JsonSerializer.Deserialize<PriceCheckResponse>(json);
-                        decimal? currentPrice = responseObject?.currentPrice;
-                        return currentPrice.HasValue ? currentPrice.Value : 0m;
+                        throw new InvalidOperationException($"Price data missing in valid response for ticker: {ticker}");
                     }
+
+                    return currentPrice.Value;
                 }
             }
-            catch (Exception ex)
+            catch (HttpRequestException ex)
             {
-                _logger.LogError(ex, "GetPriceFromTicker Failed with the following exception message : " + ex.Message);
+                _logger.LogError(ex, $"HTTP request failed for Ticker {ticker}. Status Code: {ex.StatusCode}");
+                throw;
             }
-            return 0m;
+            catch (JsonException ex) 
+            {
+                _logger.LogError(ex, $"Failed to deserialize price response for Ticker {ticker}");
+                throw;
+            }
         }
     }
 }

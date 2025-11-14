@@ -11,9 +11,15 @@ namespace PricingSystem.Services
         private readonly ILogger<PricingService> _logger;
         private readonly IPriceChecker _priceChecker;
         //These would be accessed from the database, but here I have hardcoded for testing
-        private readonly HashSet<string> _tickers = new HashSet<string>() { "IBM", "AMZN", "AAPL" };
+        private readonly HashSet<string> _tickers = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "IBM", "AMZN", "AAPL" };
         private readonly IDictionary<string, decimal> _prices = new ConcurrentDictionary<string, decimal>();
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(10);
+        private const decimal InvalidPrice = 0m;
+
+        private HashSet<string> Tickers
+            {
+            get { return _tickers; }
+            }
         public PricingService(ILogger<PricingService> logger, IPriceChecker priceChecker) 
             : base(_checkRate, logger)
         {
@@ -22,7 +28,7 @@ namespace PricingSystem.Services
 
             foreach(var ticker in _tickers)
             {
-                _prices.TryAdd(ticker, 0m);
+                _prices.TryAdd(ticker, InvalidPrice);
             }
         }
 
@@ -38,27 +44,30 @@ namespace PricingSystem.Services
         }
         public decimal GetCurrentPrice(string Ticker)
         {
-            if(!ValidateTicker(Ticker)) throw new ArgumentException("Invalid Ticker", "ticker");
-            var allowedTickers = GetTickers().ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            if (allowedTickers.Contains(Ticker))
+            if (!ValidateTicker(Ticker))
             {
-                Ticker = allowedTickers.First(x => x.Equals(Ticker, StringComparison.OrdinalIgnoreCase));
+                throw new ArgumentException("Ticker cannot be null or empty.", nameof(Ticker));
+            }
+
+            if (Tickers.Contains(Ticker))
+            {
+                var normalisedTicker = Tickers.First(x => x.Equals(Ticker, StringComparison.OrdinalIgnoreCase));
+
+                if (_prices.TryGetValue(normalisedTicker, out var price))
+                {
+                    return price;
+                }
+                else
+                {
+                    _logger.LogWarning($"Price date not available for Ticker {normalisedTicker}");
+                    throw new InvalidOperationException($"Current price not available for Ticker {normalisedTicker}");
+                }
             }
             else
             {
-                _logger.LogError($"Ticker was invalid. Ticker was : {Ticker}");
-                throw new ArgumentException("Invalid Ticker", "ticker");
+                _logger.LogError($"Invalid or unsupported Ticker provided : {Ticker}");
+                throw new ArgumentException($"Unsupported Ticker provided : {Ticker}");
             }
-            if (_prices.TryGetValue(Ticker, out var price))
-            {
-                return price;
-            }
-            else
-            {
-                throw new ArgumentException("Invalid Ticker", "ticker");
-            }
-
         }
         public IList<string> GetTickers()
         {
@@ -72,18 +81,23 @@ namespace PricingSystem.Services
 
         private async Task SetPrice(string Ticker)
         {
+            if (string.IsNullOrEmpty(Ticker))
+            {
+                _logger.LogError("SetPrice called with null or empty Ticker.");
+                return;
+            }
             await _semaphoreSlim.WaitAsync().ConfigureAwait(false);
             try
             {
                 var price = await _priceChecker.GetPriceFromTicker(Ticker).ConfigureAwait(false);
-                if (price > 0m)
+                if (price > InvalidPrice)
                 {
                     _prices[Ticker] = price;
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message, $"The Ticker was {Ticker}");
+                _logger.LogError($"Error getting price for Ticker : {Ticker}");
             }
             finally
             {
