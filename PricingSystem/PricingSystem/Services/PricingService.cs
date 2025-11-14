@@ -44,12 +44,12 @@ namespace PricingSystem.Services
         }
         public decimal GetCurrentPrice(string Ticker)
         {
-            if (!ValidateTicker(Ticker))
+            if (!ValidateTicker(Ticker) || !Tickers.Contains(Ticker))
             {
-                throw new ArgumentException("Ticker cannot be null or empty.", nameof(Ticker));
+                _logger.LogError($"Invalid or unsupported Ticker provided : {Ticker}");
+                throw new ArgumentException($"Unsupported Ticker provided : {Ticker}");
             }
-
-            if (Tickers.Contains(Ticker))
+            else
             {
                 var normalisedTicker = Tickers.First(x => x.Equals(Ticker, StringComparison.OrdinalIgnoreCase));
 
@@ -62,11 +62,6 @@ namespace PricingSystem.Services
                     _logger.LogWarning($"Price date not available for Ticker {normalisedTicker}");
                     throw new InvalidOperationException($"Current price not available for Ticker {normalisedTicker}");
                 }
-            }
-            else
-            {
-                _logger.LogError($"Invalid or unsupported Ticker provided : {Ticker}");
-                throw new ArgumentException($"Unsupported Ticker provided : {Ticker}");
             }
         }
         public IList<string> GetTickers()
