@@ -26,7 +26,7 @@ namespace PricingSystem.Services
             _logger = logger;
             _priceChecker = priceChecker;
 
-            foreach(var ticker in _tickers)
+            foreach(var ticker in Tickers)
             {
                 _prices.TryAdd(ticker, InvalidPrice);
             }
@@ -66,7 +66,7 @@ namespace PricingSystem.Services
         }
         public IList<string> GetTickers()
         {
-            return _tickers.ToList();
+            return Tickers.ToList();
         }
 
         public IDictionary<string, decimal> GetPrices()
@@ -102,7 +102,7 @@ namespace PricingSystem.Services
 
         protected async override Task<bool> SetCurrentPrices()
         {
-            var tasks = _tickers.Select(async ticker => await SetPrice(ticker).ConfigureAwait(false));
+            var tasks = Tickers.Select(async ticker => await SetPrice(ticker).ConfigureAwait(false));
 
             await Task.WhenAll(tasks);
 
