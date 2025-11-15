@@ -39,9 +39,8 @@ namespace PricingSystemTests
         public void GetCurrentPrice_InValidTicker_ThrowsArgumentException(string ticker)
         {
             // Arrange
-            var exceptionType = typeof(ArgumentException);
             // Act and Assert
-            Assert.Throws(exceptionType, () => _pricingService.GetCurrentPrice(ticker));
+            Assert.Throws<ArgumentException>(() => _pricingService.GetCurrentPrice(ticker));
         }
     }
 }
