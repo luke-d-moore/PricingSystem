@@ -100,9 +100,8 @@ namespace PricingSystemTests
         public async Task GetPriceFromTicker_GivenNullOrEmptyTicker_ThrowsArgumentException(string invalidTicker)
         {
             // Arrange
-            var exceptionType = typeof(ArgumentException);
             // Act and Assert
-            var result = await Assert.ThrowsAsync(exceptionType, () => _priceChecker.GetPriceFromTicker(invalidTicker));
+            var result = await Assert.ThrowsAsync<ArgumentException>(async () => await _priceChecker.GetPriceFromTicker(invalidTicker));
         }
 
         [Fact]
@@ -110,7 +109,6 @@ namespace PricingSystemTests
         {
             // Arrange
             var ticker = "TSLA";
-            var exceptionType = typeof(HttpRequestException);
             var mockResponseContent = JsonSerializer.Serialize(new PriceCheckResponse { currentPrice = 0m });
             var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -123,14 +121,13 @@ namespace PricingSystemTests
                 SetupFactory(httpResponse, true)
             );
             // Act and Assert
-            var result = await Assert.ThrowsAsync(exceptionType, async () => await priceChecker.GetPriceFromTicker(ticker));
+            var result = await Assert.ThrowsAsync<HttpRequestException>(async () => await priceChecker.GetPriceFromTicker(ticker));
         }
         [Fact]
         public async Task GetPriceFromTicker_ApiReturnsErrorStatusCode_ThrowsException()
         {
             // Arrange
             var ticker = "TSLA";
-            var exceptionType = typeof(Exception);
             var mockResponseContent = JsonSerializer.Serialize(new PriceCheckResponse { currentPrice = 0m });
             var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -143,7 +140,7 @@ namespace PricingSystemTests
                 SetupFactory(httpResponse, true, true)
             );
             // Act and Assert
-            var result = await Assert.ThrowsAsync(exceptionType, async () => await priceChecker.GetPriceFromTicker(ticker));
+            var result = await Assert.ThrowsAsync<Exception>(async () => await priceChecker.GetPriceFromTicker(ticker));
         }
 
         [Theory]
@@ -165,9 +162,8 @@ namespace PricingSystemTests
                 SetupFactory(httpResponse)
             );
 
-            var exceptionType = typeof(JsonException);
             // Act and Assert
-            var result = await Assert.ThrowsAsync(exceptionType, async () => await priceChecker.GetPriceFromTicker(ticker));
+            var result = await Assert.ThrowsAsync<JsonException>(async () => await priceChecker.GetPriceFromTicker(ticker));
         }
 
         [Fact]
@@ -187,9 +183,8 @@ namespace PricingSystemTests
                 SetupFactory(httpResponse)
             );
 
-            var exceptionType = typeof(InvalidOperationException);
             // Act and Assert
-            var result = await Assert.ThrowsAsync(exceptionType, async () => await priceChecker.GetPriceFromTicker(ticker));
+            var result = await Assert.ThrowsAsync<InvalidOperationException>(async () => await priceChecker.GetPriceFromTicker(ticker));
         }
     }
 }
