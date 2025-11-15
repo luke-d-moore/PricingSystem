@@ -32,7 +32,7 @@ namespace PricingSystemTests
             _priceChecker = new PriceChecker(_configuration.Object, _priceLogger.Object, _httpClientFactory.Object);
         }
 
-        private IHttpClientFactory SetupFactory(HttpResponseMessage httpResponseMessage, bool ShouldFail = false)
+        private IHttpClientFactory SetupFactory(HttpResponseMessage httpResponseMessage, bool ShouldFail = false, bool ThrowsException = false)
         {
             var mockHandler = new Mock<HttpMessageHandler>(MockBehavior.Strict);
 
@@ -56,7 +56,7 @@ namespace PricingSystemTests
                     ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>()
                 )
-                .Throws(new HttpRequestException());
+                .Throws(ThrowsException ? new Exception() : new HttpRequestException());
             }
 
             var controlledHttpClient = new HttpClient(mockHandler.Object);
@@ -121,6 +121,26 @@ namespace PricingSystemTests
                 _configuration.Object,
                 _priceLogger.Object,
                 SetupFactory(httpResponse, true)
+            );
+            // Act and Assert
+            var result = await Assert.ThrowsAsync(exceptionType, async () => await priceChecker.GetPriceFromTicker(ticker));
+        }
+        [Fact]
+        public async Task GetPriceFromTicker_ApiReturnsErrorStatusCode_ThrowsException()
+        {
+            // Arrange
+            var ticker = "TSLA";
+            var exceptionType = typeof(Exception);
+            var mockResponseContent = JsonSerializer.Serialize(new PriceCheckResponse { currentPrice = 0m });
+            var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(mockResponseContent, System.Text.Encoding.UTF8, "application/json")
+            };
+
+            var priceChecker = new PriceChecker(
+                _configuration.Object,
+                _priceLogger.Object,
+                SetupFactory(httpResponse, true, true)
             );
             // Act and Assert
             var result = await Assert.ThrowsAsync(exceptionType, async () => await priceChecker.GetPriceFromTicker(ticker));

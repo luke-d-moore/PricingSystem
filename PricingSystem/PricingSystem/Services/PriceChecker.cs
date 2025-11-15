@@ -69,6 +69,11 @@ namespace PricingSystem.Services
                 _logger.LogError(ex, $"Failed to deserialize price response for Ticker {ticker}");
                 throw;
             }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, $"An unexpected error occurred while fetching price for Ticker {ticker}.");
+                throw;
+            }
         }
 
         public string GetRequestURL(string ticker)
