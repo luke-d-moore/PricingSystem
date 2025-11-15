@@ -1,11 +1,11 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace PricingSystem.Response
+namespace PricingSystem.Responses
 {
     public class PriceCheckResponse
     {
         [JsonPropertyName("c")]
-        public decimal currentPrice { get; set; }
+        public decimal? currentPrice { get; set; }
 
         [JsonPropertyName("h")]
         public decimal HighPrice { get; set; }

@@ -1,4 +1,4 @@
-﻿using PricingSystem.Response;
+﻿using PricingSystem.Responses;
 using Serilog;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
@@ -12,20 +12,23 @@ namespace PricingSystem.Services
         private readonly IConfiguration _configuration;
         private readonly string _baseURL;
         private readonly ILogger<PriceChecker> _logger;
-        private HttpClient _client = new HttpClient();
+        private IHttpClientFactory _clientFactory;
+        private readonly HttpClient _client;
         public string BaseURL
         {
             get { return _baseURL; }
         }
-        public PriceChecker(IConfiguration configuration, ILogger<PriceChecker> logger)
+        public PriceChecker(IConfiguration configuration, ILogger<PriceChecker> logger, IHttpClientFactory httpClientFactory)
         {
             _configuration = configuration;
             _baseURL = _configuration["ThirdPartyPriceCheckURL"];
             _logger = logger;
+            _clientFactory = httpClientFactory;
+            _client = _clientFactory.CreateClient();
         }
         public async Task<decimal> GetPriceFromTicker(string ticker)
         {
-            if (string.IsNullOrEmpty(ticker))
+            if (string.IsNullOrWhiteSpace(ticker))
             {
                 _logger.LogWarning("GetPriceFromTicker called with null or empty ticker.");
                 throw new ArgumentException("Ticker cannot be null or empty.", nameof(ticker));
@@ -34,7 +37,7 @@ namespace PricingSystem.Services
             {
                 _logger.LogInformation($"GetPriceFromTicker Request sent for Ticker {ticker}");
 
-                var requestUrl = BaseURL.Replace("[Ticker]", ticker);
+                var requestUrl = GetRequestURL(ticker);
 
                 using (HttpResponseMessage response = await _client.GetAsync(requestUrl).ConfigureAwait(false))
                 {
@@ -66,6 +69,11 @@ namespace PricingSystem.Services
                 _logger.LogError(ex, $"Failed to deserialize price response for Ticker {ticker}");
                 throw;
             }
+        }
+
+        public string GetRequestURL(string ticker)
+        {
+            return BaseURL.Replace("[Ticker]", ticker);
         }
     }
 }

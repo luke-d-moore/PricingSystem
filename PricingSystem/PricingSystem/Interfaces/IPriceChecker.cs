@@ -1,4 +1,4 @@
-﻿using PricingSystem.Response;
+﻿using PricingSystem.Responses;
 using Serilog;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;

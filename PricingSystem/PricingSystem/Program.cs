@@ -31,6 +31,7 @@ builder.Services.AddLogging(configure => { configure.AddSerilog(); });
 
 builder.Services.AddSingleton<IPricingService, PricingService>();
 builder.Services.AddSingleton<IPriceChecker, PriceChecker>();
+builder.Services.AddHttpClient();
 builder.Services.AddHostedService(p => p.GetRequiredService<IPricingService>());
 
 var app = builder.Build();
