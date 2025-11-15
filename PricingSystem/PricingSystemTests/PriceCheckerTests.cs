@@ -59,11 +59,7 @@ namespace PricingSystemTests
                 .Throws(new HttpRequestException());
             }
 
-
             var controlledHttpClient = new HttpClient(mockHandler.Object);
-            //{
-            //    BaseAddress = new Uri(_configuration.Object["ThirdPartyPriceCheckURL"])
-            //};
 
             var mockHttpClientFactory = new Mock<IHttpClientFactory>();
 
