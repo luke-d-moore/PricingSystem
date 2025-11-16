@@ -68,7 +68,7 @@ namespace PricingSystem.Services
                 }
                 else
                 {
-                    _logger.LogWarning($"Price date not available for Ticker {normalisedTicker}");
+                    _logger.LogWarning($"Price data not available for Ticker {normalisedTicker}");
                     throw new InvalidOperationException($"Current price not available for Ticker {normalisedTicker}");
                 }
             }
