@@ -41,7 +41,8 @@ namespace PricingSystem.Services
             if (
                 Ticker == null || 
                 (Ticker.Length > 5 || 
-                Ticker.Length < 3)
+                Ticker.Length < 3
+                || !Tickers.Contains(Ticker))
                )
             {
                 _logger.LogError($"Ticker was invalid.");
@@ -52,7 +53,7 @@ namespace PricingSystem.Services
         }
         public decimal GetCurrentPrice(string Ticker)
         {
-            if (!ValidateTicker(Ticker) || !Tickers.Contains(Ticker))
+            if (!ValidateTicker(Ticker))
             {
                 _logger.LogError($"Invalid or unsupported Ticker provided : {Ticker}");
                 throw new ArgumentException($"Unsupported Ticker provided : {Ticker}");
