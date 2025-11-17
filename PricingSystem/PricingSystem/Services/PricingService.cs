@@ -11,15 +11,24 @@ namespace PricingSystem.Services
         private readonly ILogger<PricingService> _logger;
         private readonly IPriceChecker _priceChecker;
         //These would be accessed from the database, but here I have hardcoded for testing
-        private readonly HashSet<string> _tickers = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "IBM", "AMZN", "AAPL" };
+        private HashSet<string> _tickers = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "IBM", "AMZN", "AAPL" };
         private readonly ConcurrentDictionary<string, decimal> _prices = new ConcurrentDictionary<string, decimal>();
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(10);
         private const decimal InvalidPrice = 0m;
 
         public HashSet<string> Tickers
         {
-            get { return _tickers; }
+            get => _tickers;
+            set { _tickers = value; }
         }
+        private void RefreshTickers() 
+        {
+            //access db, get all current valid Tickers from the db
+            var dbTickers = new List<string>();
+            //example code for the refresh to add any new tickers to the collection to be checked
+            Tickers = dbTickers.ToHashSet();
+        }
+
         public ConcurrentDictionary<string, decimal> Prices
         {
             get { return _prices; }
@@ -116,6 +125,8 @@ namespace PricingSystem.Services
 
         protected async override Task<bool> SetCurrentPrices()
         {
+            //RefreshTickers(); // from the db if any changes have happened
+
             var tasks = Tickers
                 .Select(async ticker => await SetPrice(ticker)
                 .ConfigureAwait(false));
