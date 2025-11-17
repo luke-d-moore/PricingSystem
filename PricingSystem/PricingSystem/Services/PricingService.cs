@@ -26,6 +26,9 @@ namespace PricingSystem.Services
             //access db, get all current valid Tickers from the db
             var dbTickers = new List<string>();
             //example code for the refresh to add any new tickers to the collection to be checked
+            //consider thread safety, while another thread is getting the tickers and this thread is overwriting tickers
+            //change the type of the collection to something thread safe
+            //keep this here as a template, but if using a db and actually refreshing these would be things to consider
             Tickers = dbTickers.ToHashSet();
         }
 
