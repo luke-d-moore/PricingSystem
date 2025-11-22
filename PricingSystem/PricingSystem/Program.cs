@@ -5,6 +5,8 @@ using PricingSystem.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 // Add services to the container.
 builder.Services.AddCors(options =>
 {
@@ -35,6 +37,8 @@ builder.Services.AddHttpClient();
 builder.Services.AddHostedService(p => p.GetRequiredService<IPricingService>());
 
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();

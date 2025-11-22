@@ -4,3 +4,7 @@
 /PricingSystem/PricingSystem/logs
 /PricingSystem/PricingSystemTests/bin
 /PricingSystem/PricingSystemTests/obj
+/PricingSystem/PricingSystem.AppHost/obj
+/PricingSystem/PricingSystem.ServiceDefaults/obj
+/PricingSystem/PricingSystem.AppHost/bin
+/PricingSystem/PricingSystem.ServiceDefaults/bin
