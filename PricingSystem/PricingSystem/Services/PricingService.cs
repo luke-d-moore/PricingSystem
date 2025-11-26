@@ -14,7 +14,6 @@ namespace PricingSystem.Services
         private HashSet<string> _tickers = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "IBM", "AMZN", "AAPL" };
         private readonly ConcurrentDictionary<string, decimal> _prices = new ConcurrentDictionary<string, decimal>();
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(10);
-        private const decimal InvalidPrice = 0m;
 
         public HashSet<string> Tickers
         {
@@ -41,11 +40,6 @@ namespace PricingSystem.Services
         {
             _logger = logger;
             _priceChecker = priceChecker;
-
-            foreach(var ticker in Tickers)
-            {
-                Prices.TryAdd(ticker, InvalidPrice);
-            }
         }
 
         private bool ValidateTicker(string Ticker)
@@ -108,10 +102,7 @@ namespace PricingSystem.Services
                 .ConfigureAwait(false);
             try
             {
-                var price = await _priceChecker
-                    .GetPriceFromTicker(Ticker)
-                    .ConfigureAwait(false);
-                if (price > InvalidPrice)
+                if (await _priceChecker.GetPriceFromTicker(Ticker).ConfigureAwait(false) is { } price)
                 {
                     Prices[Ticker] = price;
                 }

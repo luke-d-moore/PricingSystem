@@ -20,17 +20,19 @@ namespace PricingSystemTests
             _pricingService = new PricingService(_priceLogger, _priceChecker.Object);
         }
         public static IEnumerable<object[]> TickerData =>
-    new List<object[]>
-    {
+        new List<object[]>
+        {
                 new object[] { null },
                 new object[] { "wrong"},
                 new object[] { "" }
-    };
+        };
 
         [Fact]
         public async Task GetCurrentPrice_ValidTicker_ReturnsDecimalAsync()
         {
             //Arrange
+            var pricingService = (PricingService)_pricingService;
+            pricingService.Prices.TryAdd("IBM", 0);
             var result = _pricingService.GetCurrentPrice("IBM");
             //Act and Assert
             Assert.IsType<decimal>(result);

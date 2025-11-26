@@ -26,7 +26,7 @@ namespace PricingSystem.Services
             _clientFactory = httpClientFactory;
             _client = _clientFactory.CreateClient();
         }
-        public async Task<decimal> GetPriceFromTicker(string ticker)
+        public async Task<decimal?> GetPriceFromTicker(string ticker)
         {
             if (string.IsNullOrWhiteSpace(ticker))
             {
@@ -49,14 +49,7 @@ namespace PricingSystem.Services
 
                     var responseObject = JsonSerializer.Deserialize<PriceCheckResponse>(json);
 
-                    var currentPrice = responseObject?.currentPrice;
-
-                    if (!currentPrice.HasValue)
-                    {
-                        throw new InvalidOperationException($"Price data missing in valid response for ticker: {ticker}");
-                    }
-
-                    return currentPrice.Value;
+                    return responseObject?.currentPrice;
                 }
             }
             catch (HttpRequestException ex)

@@ -184,7 +184,7 @@ namespace PricingSystemTests
             );
 
             // Act and Assert
-            var result = await Assert.ThrowsAsync<InvalidOperationException>(async () => await priceChecker.GetPriceFromTicker(ticker));
+            Assert.True(await priceChecker.GetPriceFromTicker(ticker) == null);
         }
     }
 }

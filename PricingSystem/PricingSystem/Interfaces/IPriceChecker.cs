@@ -7,6 +7,6 @@ namespace PricingSystem.Interfaces
 {
     public interface IPriceChecker
     {
-        public Task<decimal> GetPriceFromTicker(string ticker);
+        public Task<decimal?> GetPriceFromTicker(string ticker);
     }
 }
