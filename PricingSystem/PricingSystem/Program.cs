@@ -2,6 +2,7 @@ using PricingSystem.Services;
 using Serilog;
 using PricingSystem.Logging;
 using PricingSystem.Interfaces;
+using PricingSystem.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,6 +58,8 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapEndpoints();
 
 app.MapFallbackToFile("/index.html");
 
