@@ -1,4 +1,5 @@
 ﻿using PricingSystem.Interfaces;
+using PricingSystem.Services;
 
 namespace PricingSystem.Controllers
 {
@@ -32,9 +33,20 @@ namespace PricingSystem.Controllers
 
         public static async Task<IResult> GetAllPrices(IPricingService pricingService)
         {
-            var prices = pricingService.GetPrices();
-            var response = new GetPriceResponse(true, "Prices Retrieved", prices);
-            return Results.Ok(response);
+            var tickers = pricingService.GetPrices();
+            if (tickers.Any())
+            {
+                var response = new GetPriceResponse(true, "Prices Retrieved", tickers);
+                return Results.Ok(response);
+            }
+            else
+            {
+                return Results.Problem(
+                    title: "Price Retrieve Failed",
+                    detail: "No Prices Found",
+                    statusCode: StatusCodes.Status404NotFound
+                );
+            }
         }
 
         public static async Task<IResult> GetTickers(IPricingService pricingService)

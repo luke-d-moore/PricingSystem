@@ -50,8 +50,19 @@ namespace PricingSystem.Controllers
         public IActionResult GetAllPrices()
         {
             var tickers = _pricingService.GetPrices();
-            var response = new GetPriceResponse(true, "Prices Retrieved", tickers);
-            return Ok(response);
+            if (tickers.Any())
+            {
+                var response = new GetPriceResponse(true, "Prices Retrieved", tickers);
+                return Ok(response);
+            }
+            else
+            {
+                return Problem(
+                    title: "Price Retrieve Failed",
+                    detail: "No Prices Found",
+                    statusCode: StatusCodes.Status404NotFound
+                );
+            }
         }
 
         // GET: api/<PriceController>
