@@ -46,9 +46,9 @@ namespace PricingSystem.Services
         {
             if (
                 Ticker == null || 
-                (Ticker.Length > 5 || 
-                Ticker.Length < 3
-                || !Tickers.Contains(Ticker))
+                Ticker.Length > 5 || 
+                Ticker.Length < 3 || 
+                !Tickers.Contains(Ticker)
                )
             {
                 _logger.LogError($"Ticker was invalid.");
