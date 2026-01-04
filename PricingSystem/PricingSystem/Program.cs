@@ -3,6 +3,7 @@ using Serilog;
 using PricingSystem.Logging;
 using PricingSystem.Interfaces;
 using PricingSystem.Controllers;
+using Grpc.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,8 @@ builder.Services.AddCors(options =>
         });
 });
 builder.Services.AddControllers();
+
+builder.Services.AddGrpc();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -33,8 +36,29 @@ LogConfiguration.ConfigureSerilog(configuration);
 builder.Services.AddLogging(configure => { configure.AddSerilog(); });
 
 builder.Services.AddSingleton<IPricingService, PricingService>();
-builder.Services.AddSingleton<IPriceChecker, PriceChecker>();
-builder.Services.AddHttpClient();
+
+builder.Services.AddHttpClient("LiveMarketClient", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ThirdPartyPriceCheckURL"]);
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback =
+        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+});
+
+builder.Services.AddSingleton<LiveMarketDataCache>(sp =>
+{
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    var client = factory.CreateClient("LiveMarketClient");
+
+    var logger = sp.GetRequiredService<ILogger<LiveMarketDataCache>>();
+    return new LiveMarketDataCache(logger, client);
+});
+
+builder.Services.AddSingleton<ILiveMarketDataCache>(sp => sp.GetRequiredService<LiveMarketDataCache>());
+
+
 builder.Services.AddHostedService(p => p.GetRequiredService<IPricingService>());
 
 var app = builder.Build();
@@ -44,7 +68,6 @@ app.MapDefaultEndpoints();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -58,6 +81,8 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapGrpcService<LiveMarketDataCache>();
 
 app.MapEndpoints();
 

@@ -1,20 +1,19 @@
-﻿using System.Collections.Concurrent;
-using System.Threading;
-using System.Timers;
+﻿using Grpc.Core;
 using PricingSystem.Interfaces;
+using System.Collections.Concurrent;
+using System.Threading.Channels;
+using PricingSystem.Protos;
 
 namespace PricingSystem.Services
 {
     public class PricingService : PricingServiceBase, IPricingService
     {
-        private const int _checkRate = 30000;
+        private const int _checkRate = 15000;
         private readonly ILogger<PricingService> _logger;
-        private readonly IPriceChecker _priceChecker;
+        private readonly ILiveMarketDataCache _liveMarketDataCache;
         //These would be accessed from the database, but here I have hardcoded for testing
         private HashSet<string> _tickers = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "IBM", "AMZN", "AAPL" };
-        private readonly ConcurrentDictionary<string, decimal> _prices = new ConcurrentDictionary<string, decimal>();
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(10);
-
         public HashSet<string> Tickers
         {
             get => _tickers;
@@ -30,16 +29,11 @@ namespace PricingSystem.Services
             //keep this here as a template, but if using a db and actually refreshing these would be things to consider
             Tickers = dbTickers.ToHashSet();
         }
-
-        public ConcurrentDictionary<string, decimal> Prices
-        {
-            get { return _prices; }
-        }
-        public PricingService(ILogger<PricingService> logger, IPriceChecker priceChecker) 
+        public PricingService(ILogger<PricingService> logger, ILiveMarketDataCache liveMarketDataCache) 
             : base(_checkRate, logger)
         {
             _logger = logger;
-            _priceChecker = priceChecker;
+            _liveMarketDataCache = liveMarketDataCache;
         }
 
         private bool ValidateTicker(string Ticker)
@@ -69,7 +63,7 @@ namespace PricingSystem.Services
                 var normalisedTicker = Tickers
                     .First(x => x.Equals(Ticker, StringComparison.OrdinalIgnoreCase));
 
-                if (Prices.TryGetValue(normalisedTicker, out var price))
+                if (_liveMarketDataCache.GetPrices().TryGetValue(normalisedTicker, out var price))
                 {
                     return price;
                 }
@@ -87,7 +81,7 @@ namespace PricingSystem.Services
 
         public IDictionary<string, decimal> GetPrices()
         {
-            return Prices;
+            return _liveMarketDataCache.GetPrices();
         }
 
         private async Task SetPrice(string Ticker)
@@ -102,10 +96,7 @@ namespace PricingSystem.Services
                 .ConfigureAwait(false);
             try
             {
-                if (await _priceChecker.GetPriceFromTicker(Ticker).ConfigureAwait(false) is { } price)
-                {
-                    Prices[Ticker] = price;
-                }
+                await _liveMarketDataCache.GetPriceFromTicker(Ticker).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
