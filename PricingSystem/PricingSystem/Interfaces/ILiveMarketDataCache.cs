@@ -2,7 +2,7 @@
 {
     public interface ILiveMarketDataCache
     {
-        public Task GetPriceFromTicker(string ticker);
+        public Task SetPriceFromTicker(string ticker);
         public IDictionary<string, decimal> GetPrices();
     }
 }

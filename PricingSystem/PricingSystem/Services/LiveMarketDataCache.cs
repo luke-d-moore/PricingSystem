@@ -21,7 +21,7 @@ namespace PricingSystem.Services
             _logger = logger;
             _client = httpClient;
         }
-        public async Task GetPriceFromTicker(string ticker)
+        public async Task SetPriceFromTicker(string ticker)
         {
             if (string.IsNullOrWhiteSpace(ticker))
             {
@@ -89,7 +89,7 @@ namespace PricingSystem.Services
             }
         }
 
-        public string GetRequestURL(string ticker)
+        private string GetRequestURL(string ticker)
         {
             return _client.BaseAddress.ToString().Replace("[Ticker]", ticker);
         }
