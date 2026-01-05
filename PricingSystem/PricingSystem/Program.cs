@@ -43,7 +43,7 @@ builder.Services.AddHttpClient("LiveMarketClient", client =>
         HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
 });
 
-builder.Services.AddSingleton<LiveMarketDataCache>(sp =>
+builder.Services.AddSingleton(sp =>
 {
     var factory = sp.GetRequiredService<IHttpClientFactory>();
     var client = factory.CreateClient("LiveMarketClient");
@@ -66,11 +66,9 @@ app.MapDefaultEndpoints();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Pricing System V1");
-    });
+    app.UseSwaggerUI();
 }
+
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -88,20 +86,6 @@ app.MapControllers();
 app.MapEndpoints();
 
 app.MapGrpcService<LiveMarketDataCache>();
-
-app.MapGet("", (HttpContext context) =>
-{
-    if (context.Connection.LocalPort == 7250)
-    {
-        return Results.Redirect("/swagger/index.html", permanent: true);
-    }
-    else
-    {
-        return Results.Text(
-    "Communication with gRPC endpoints must be made through a gRPC client.",
-    statusCode: 404);
-    }
-});
 
 app.MapFallbackToFile("/index.html");
 
