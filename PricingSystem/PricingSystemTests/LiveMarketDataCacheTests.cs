@@ -78,7 +78,7 @@ namespace PricingSystemTests
             );
 
             // Act
-            await liveMarketDataCache.SetPriceFromTicker(ticker);
+            await liveMarketDataCache.UpdateCacheAndNotifySubscribersAsync(ticker);
             var result = liveMarketDataCache.GetPrices()[ticker];
 
             // Assert
@@ -93,7 +93,7 @@ namespace PricingSystemTests
         {
             // Arrange
             // Act and Assert
-            var result = await Assert.ThrowsAsync<ArgumentException>(async () => await _LiveMarketDataCache.SetPriceFromTicker(invalidTicker));
+            var result = await Assert.ThrowsAsync<ArgumentException>(async () => await _LiveMarketDataCache.UpdateCacheAndNotifySubscribersAsync(invalidTicker));
         }
 
         [Fact]
@@ -112,7 +112,7 @@ namespace PricingSystemTests
                 SetupFactory(httpResponse, true).CreateClient()
             );
             // Act and Assert
-            var result = await Assert.ThrowsAsync<HttpRequestException>(async () => await liveMarketDataCache.SetPriceFromTicker(ticker));
+            var result = await Assert.ThrowsAsync<HttpRequestException>(async () => await liveMarketDataCache.UpdateCacheAndNotifySubscribersAsync(ticker));
         }
         [Fact]
         public async Task GetPriceFromTicker_ApiReturnsErrorStatusCode_ThrowsException()
@@ -130,7 +130,7 @@ namespace PricingSystemTests
                 SetupFactory(httpResponse, true, true).CreateClient()
             );
             // Act and Assert
-            var result = await Assert.ThrowsAsync<Exception>(async () => await liveMarketDataCache.SetPriceFromTicker(ticker));
+            var result = await Assert.ThrowsAsync<Exception>(async () => await liveMarketDataCache.UpdateCacheAndNotifySubscribersAsync(ticker));
         }
 
         [Theory]
@@ -152,7 +152,7 @@ namespace PricingSystemTests
             );
 
             // Act and Assert
-            var result = await Assert.ThrowsAsync<JsonException>(async () => await liveMarketDataCache.SetPriceFromTicker(ticker));
+            var result = await Assert.ThrowsAsync<JsonException>(async () => await liveMarketDataCache.UpdateCacheAndNotifySubscribersAsync(ticker));
         }
 
         [Fact]
@@ -172,7 +172,7 @@ namespace PricingSystemTests
             );
 
             // Act and Assert
-            await liveMarketDataCache.SetPriceFromTicker(ticker);
+            await liveMarketDataCache.UpdateCacheAndNotifySubscribersAsync(ticker);
 
             var result = liveMarketDataCache.GetPrices().Count;
 

@@ -21,7 +21,7 @@ namespace PricingSystem.Services
             _logger = logger;
             _client = httpClient;
         }
-        public async Task SetPriceFromTicker(string ticker)
+        public async Task UpdateCacheAndNotifySubscribersAsync(string ticker)
         {
             if (string.IsNullOrWhiteSpace(ticker))
             {
@@ -46,29 +46,7 @@ namespace PricingSystem.Services
                     {
                         _prices[ticker] = price;
 
-                        if (_subscribers.Any())
-                        {
-                            var update = new PriceUpdate
-                            {
-                                Symbol = ticker,
-                                Price = (double)price
-                            };
-
-                            try
-                            {
-                                foreach (var sub in _subscribers.ToArray())
-                                {
-                                    if (!sub.Writer.TryWrite(update))
-                                    {
-                                        await CleanUpSubscribers(sub);
-                                    }
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError(ex, $"Failed to Publish new Price to Subscribers for Ticker {ticker}");
-                            }
-                        }
+                        await BroadcastPriceUpdateAsync(ticker, price).ConfigureAwait(false);
                     }
                 }
             }
@@ -86,6 +64,33 @@ namespace PricingSystem.Services
             {
                 _logger.LogError(ex, $"An unexpected error occurred while fetching price for Ticker {ticker}.");
                 throw;
+            }
+        }
+
+        private async Task BroadcastPriceUpdateAsync(string ticker, decimal price)
+        {
+            if (_subscribers.Any())
+            {
+                var update = new PriceUpdate
+                {
+                    Symbol = ticker,
+                    Price = (double)price
+                };
+
+                try
+                {
+                    foreach (var sub in _subscribers.ToArray())
+                    {
+                        if (!sub.Writer.TryWrite(update))
+                        {
+                            await CleanUpSubscribers(sub);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Failed to Publish new Price to Subscribers for Ticker {ticker}");
+                }
             }
         }
 

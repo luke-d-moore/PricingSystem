@@ -20,8 +20,6 @@ builder.Services.AddCors(options =>
         });
 });
 builder.Services.AddControllers();
-
-builder.Services.AddGrpc();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -59,18 +57,25 @@ builder.Services.AddSingleton<ILiveMarketDataCache>(sp => sp.GetRequiredService<
 
 builder.Services.AddHostedService(p => p.GetRequiredService<IPricingService>());
 
+builder.Services.AddGrpc();
+
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
-app.UseDefaultFiles();
-app.UseStaticFiles();
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Pricing System V1");
+    });
 }
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.UseRouting();
 
 app.UseCors();
 
@@ -80,9 +85,23 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+app.MapEndpoints();
+
 app.MapGrpcService<LiveMarketDataCache>();
 
-app.MapEndpoints();
+app.MapGet("", (HttpContext context) =>
+{
+    if (context.Connection.LocalPort == 7250)
+    {
+        return Results.Redirect("/swagger/index.html", permanent: true);
+    }
+    else
+    {
+        return Results.Text(
+    "Communication with gRPC endpoints must be made through a gRPC client.",
+    statusCode: 404);
+    }
+});
 
 app.MapFallbackToFile("/index.html");
 

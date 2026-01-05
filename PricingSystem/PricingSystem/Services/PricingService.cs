@@ -96,7 +96,7 @@ namespace PricingSystem.Services
                 .ConfigureAwait(false);
             try
             {
-                await _liveMarketDataCache.SetPriceFromTicker(Ticker).ConfigureAwait(false);
+                await _liveMarketDataCache.UpdateCacheAndNotifySubscribersAsync(Ticker).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
