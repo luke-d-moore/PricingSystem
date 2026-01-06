@@ -9,6 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+builder.Services.AddHttpsRedirection(options =>
+{
+    options.HttpsPort = 7250;
+});
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(
@@ -68,9 +73,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    app.UseHttpsRedirection();
+}
 
 
-app.UseDefaultFiles();
+    app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
