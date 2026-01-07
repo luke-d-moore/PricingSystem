@@ -25,12 +25,12 @@ namespace PricingSystem.Services
         {
             if (string.IsNullOrWhiteSpace(ticker))
             {
-                _logger.LogWarning("GetPriceFromTicker called with null or empty ticker.");
+                _logger.LogWarning("UpdateCacheAndNotifySubscribersAsync called with null or empty ticker.");
                 throw new ArgumentException("Ticker cannot be null or empty.", nameof(ticker));
             }
             try
             {
-                _logger.LogInformation($"GetPriceFromTicker Request sent for Ticker {ticker}");
+                _logger.LogInformation($"UpdateCacheAndNotifySubscribersAsync Request sent for Ticker {ticker}");
 
                 using (HttpResponseMessage response = await _client.GetAsync(GetRequestURL(ticker)).ConfigureAwait(false))
                 {
@@ -38,7 +38,7 @@ namespace PricingSystem.Services
 
                     var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-                    _logger.LogInformation($"GetPriceFromTicker Response received for Ticker {ticker}, response was: {json}");
+                    _logger.LogInformation($"UpdateCacheAndNotifySubscribersAsync Response received for Ticker {ticker}, response was: {json}");
 
                     var responseObject = JsonSerializer.Deserialize<PriceCheckResponse>(json);
 
