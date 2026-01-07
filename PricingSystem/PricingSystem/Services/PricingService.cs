@@ -8,7 +8,7 @@ namespace PricingSystem.Services
 {
     public class PricingService : PricingServiceBase, IPricingService
     {
-        private const int _checkRate = 30000;
+        private const int _checkRate = 15000;
         private readonly ILogger<PricingService> _logger;
         private readonly ILiveMarketDataCache _liveMarketDataCache;
         //These would be accessed from the database, but here I have hardcoded for testing
