@@ -7,8 +7,6 @@ using Grpc.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddServiceDefaults();
-
 builder.Services.AddHttpsRedirection(options =>
 {
     options.HttpsPort = 7250;
@@ -65,8 +63,6 @@ builder.Services.AddHostedService(p => p.GetRequiredService<IPricingService>());
 builder.Services.AddGrpc();
 
 var app = builder.Build();
-
-app.MapDefaultEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

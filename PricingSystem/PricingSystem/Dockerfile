@@ -12,20 +12,20 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
 # Copy only the main project file to leverage Docker layer caching for restores
-COPY ["PricingSystem/PricingSystem.csproj", "PricingSystem/"]
+COPY ["PricingSystem/PricingSystem/PricingSystem/PricingSystem.csproj", "PricingSystem/"]
 RUN dotnet restore "./PricingSystem/PricingSystem.csproj"
 
 # Copy the rest of the source code
 COPY . .
-WORKDIR "/src/PricingSystem"
+WORKDIR "/src/PricingSystem/PricingSystem/PricingSystem"
 
 # Build the application
-RUN dotnet build "./PricingSystem.csproj" -c %BUILD_CONFIGURATION% -o /app/build
+RUN dotnet build "./PricingSystem.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # Stage 3: Publish
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./PricingSystem.csproj" -c %BUILD_CONFIGURATION% -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./PricingSystem.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # Stage 4: Final production image
 FROM base AS final
