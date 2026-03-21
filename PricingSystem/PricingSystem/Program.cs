@@ -46,7 +46,7 @@ builder.Services.AddHttpClient("LiveMarketClient", client =>
         HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
 });
 
-builder.Services.AddSingleton(sp =>
+builder.Services.AddSingleton<LiveMarketDataCache>(sp =>
 {
     var factory = sp.GetRequiredService<IHttpClientFactory>();
     var client = factory.CreateClient("LiveMarketClient");
